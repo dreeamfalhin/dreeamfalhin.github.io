@@ -1,21 +1,120 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GitHub Pages Test</title>
-  <link rel="stylesheet" href="style.css">
-  <!-- Firebase SDK -->
-  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script defer src="app.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VPS Panel Preview</title>
+<style>
+:root {
+  --bg: #0f1117;
+  --card: #1a1d24;
+  --accent: #6366f1;
+  --muted: #9ca3af;
+  --good: #10b981;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+}
+body { margin:0; font-family: Inter, sans-serif; background: var(--bg); color:white; display:flex; height:100vh;}
+.sidebar { width:220px; background:#111827; padding:20px; display:flex; flex-direction:column;}
+.sidebar h2 { text-align:center; margin-bottom:20px;}
+.sidebar button { margin-bottom:10px; padding:10px; border:none; border-radius:8px; background:var(--accent); color:white; cursor:pointer; transition:0.2s;}
+.sidebar button:hover { background:#4f46e5;}
+.main { flex:1; padding:20px; overflow-y:auto;}
+.server-card { background:var(--card); padding:16px; border-radius:12px; margin-bottom:14px; position:relative; }
+.server-card h3 { margin:0; }
+.status { position:absolute; top:14px; right:14px; font-size:14px; }
+.status.running { color:var(--good); }
+.status.stopped { color:var(--danger); }
+.meters { display:flex; gap:8px; margin:10px 0; }
+.meter { flex:1; }
+.meter .bar { height:10px; background: rgba(255,255,255,0.05); border-radius:6px; overflow:hidden; }
+.meter .fill { height:100%; width:0%; transition: width 0.5s linear; border-radius:6px;}
+.actions { display:flex; gap:8px; }
+.actions button { flex:1; padding:6px; border:none; border-radius:6px; background:#374151; color:white; cursor:pointer; transition:0.2s;}
+.actions button:hover { background:#4b5563; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1 id="title">Привет, GitHub Pages!</h1>
-    <input type="text" id="nameInput" placeholder="Введите имя">
-    <button id="saveBtn">Сохранить в базу</button>
-    <ul id="namesList"></ul>
-  </div>
+
+<div class="sidebar">
+  <h2>VPS Panel</h2>
+  <button onclick="addServer()">Добавить VPS</button>
+  <button onclick="logout()">Выйти</button>
+</div>
+
+<div class="main" id="mainContent"></div>
+
+<script>
+let servers = [
+  {id:"1", name:"vps-1", running:true, cpu:23, ram:42, disk:55, net:120},
+  {id:"2", name:"vps-2", running:false, cpu:0, ram:0, disk:0, net:0},
+  {id:"3", name:"vps-3", running:true, cpu:45, ram:60, disk:30, net:80}
+];
+
+function renderServers() {
+  const main = document.getElementById("mainContent");
+  main.innerHTML = "";
+  servers.forEach(s=>{
+    const card = document.createElement("div");
+    card.className="server-card";
+    card.innerHTML=`
+      <h3>${s.name}</h3>
+      <div class="status ${s.running?'running':'stopped'}">${s.running?'Running':'Stopped'}</div>
+      <div class="meters">
+        <div class="meter"><div class="bar"><div class="fill" style="width:${s.cpu}% ; background: linear-gradient(90deg,var(--good),var(--warn));"></div></div></div>
+        <div class="meter"><div class="bar"><div class="fill" style="width:${s.ram}% ; background: linear-gradient(90deg,var(--good),var(--warn));"></div></div></div>
+        <div class="meter"><div class="bar"><div class="fill" style="width:${s.disk}% ; background: linear-gradient(90deg,var(--good),var(--warn));"></div></div></div>
+        <div class="meter"><div class="bar"><div class="fill" style="width:${Math.min(s.net/2,100)}% ; background: linear-gradient(90deg,var(--good),var(--warn));"></div></div></div>
+      </div>
+      <div class="actions">
+        <button onclick="toggleServer('${s.id}')">${s.running?'Stop':'Start'}</button>
+        <button onclick="sshServer('${s.id}')">SSH</button>
+        <button onclick="removeServer('${s.id}')">Remove</button>
+      </div>
+    `;
+    main.appendChild(card);
+  });
+}
+
+function toggleServer(id){
+  const s=servers.find(x=>x.id===id);
+  if(s){ s.running=!s.running; renderServers();}
+}
+
+function sshServer(id){
+  alert("SSH подключение к серверу "+id+" (заглушка)");
+}
+
+function removeServer(id){
+  servers=servers.filter(x=>x.id!==id);
+  renderServers();
+}
+
+function addServer(){
+  const name=prompt("Имя VPS:","vps-"+(servers.length+1));
+  if(name) servers.push({id:Date.now().toString(), name:name, running:true, cpu:10, ram:20, disk:30, net:50});
+  renderServers();
+}
+
+function logout(){
+  alert("Выход (заглушка)");
+}
+
+// имитация динамики
+setInterval(()=>{
+  servers.forEach(s=>{
+    if(s.running){
+      s.cpu=Math.min(100,Math.max(0,s.cpu + (Math.random()-0.5)*10));
+      s.ram=Math.min(100,Math.max(0,s.ram + (Math.random()-0.5)*10));
+      s.disk=Math.min(100,Math.max(0,s.disk + (Math.random()-0.5)*5));
+      s.net=Math.min(100,Math.max(0,s.net + (Math.random()-0.5)*20));
+    }
+  });
+  renderServers();
+},2000);
+
+renderServers();
+</script>
+
 </body>
 </html>
